@@ -1,9 +1,9 @@
-use godot::classes::CharacterBody2D;
-use godot::classes::ICharacterBody2D;
-use godot::classes::InputEvent;
-use godot::classes::InputEventMouseButton;
-use godot::global::MouseButton;
-use godot::prelude::*;
+use godot::{prelude::*};
+use path::Path;
+use player::Player;
+
+mod player;
+mod path;
 
 struct MyExtension;
 
@@ -11,50 +11,42 @@ struct MyExtension;
 unsafe impl ExtensionLibrary for MyExtension {}
 
 #[derive(GodotClass)]
-#[class(base=CharacterBody2D)]
-struct Player {
-    speed: f64,
-    destination: Option<Vector2>,
-
-    base: Base<CharacterBody2D>,
+#[class(base=Node)]
+pub struct Main {
+    path_scene: Gd<PackedScene>,
+    base: Base<Node>,
 }
 
 #[godot_api]
-impl ICharacterBody2D for Player {
-    fn init(base: Base<CharacterBody2D>) -> Self {
-        godot_print!("Hello, world!");
+impl Main {
 
-        Self {
-            speed: 400.0,
-            destination: None,
+    #[func]
+    fn on_set_destination(&mut self, destination: Vector2) {
+        godot_print!("Set destination {}", destination);
+
+        let mut path_scene = self.path_scene.instantiate_as::<Node2D>();
+        path_scene.set_position(destination);
+        self.base_mut().add_child(&path_scene);
+
+        let path = path_scene.cast::<Path>();
+
+        let mut player = self.base().get_node_as::<Player>("Player");
+        player.connect("reached_destination", &path.callable("on_player_reached_destination"));
+    }
+}
+
+#[godot_api]
+impl INode for Main {
+    fn init(base: Base<Node>) -> Self {
+        godot_print!("constructing Main");
+        Main {
+            path_scene: PackedScene::new_gd(),
             base,
         }
     }
 
-    fn input(&mut self, event: Gd<InputEvent>) {
-        if let Ok(event) = event.try_cast::<InputEventMouseButton>() {
-            if event.is_pressed() && event.get_button_index() == MouseButton::LEFT {
-                self.destination = Some(event.get_position());
-                godot_print!("Got left mouse button press {}, {}", self.destination.unwrap().x, self.destination.unwrap().y);
-            }
-        }
-    }
-
-    fn physics_process(&mut self, _delta: f64) {
-        if let Some(destination) = self.destination {
-            match self.base().get_position().distance_to(destination) {
-                d if d > 10.0 => {
-                    let velocity = self.base().get_position().direction_to(destination) * self.speed as f32;
-                    self.base_mut().set_velocity(velocity);
-                    self.base_mut().move_and_slide();
-                }
-                d if d > 0.0 => {
-                    self.base_mut().set_position(destination);
-                }
-                _ => {
-                    self.destination = None;
-                }
-            }
-        }
+    fn ready(&mut self) {
+        godot_print!("main ready");
+        self.path_scene = load("res://path.tscn");
     }
 }

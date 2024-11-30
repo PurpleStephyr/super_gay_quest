@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bwr52jqtum0wt"]
+
+[ext_resource type="Texture2D" uid="uid://dmhsllky6iipi" path="res://path_vertical.png" id="1_l110k"]
+
+[node name="PathTile" type="Sprite2D"]
+texture = ExtResource("1_l110k")

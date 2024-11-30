@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://yacxvdjc5w0n"]
+
+[ext_resource type="Texture2D" uid="uid://dvxpqc4qlh2mw" path="res://path_end.png" id="1_wpsgm"]
+
+[node name="Path" type="Path"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("1_wpsgm")
